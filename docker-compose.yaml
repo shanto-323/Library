@@ -1,0 +1,33 @@
+services:
+
+  elasticsearch:
+    image: "docker.elastic.co/elasticsearch/elasticsearch:9.0.1"
+    container_name: newElasticserch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+  books:
+    build:
+      context: .
+      dockerfile: ./books/books.dockerfile
+    depends_on:
+      - elasticsearch
+    environment:
+      - DATABASE_DSN=http://elasticsearch:9200
+
+    restart: on-failure
+
+  rest:
+    build:
+      context: .
+      dockerfile: ./rest/rest.dockerfile
+    ports:
+      - 8080:8080
+    depends_on:
+      - books
+    environment:
+      - BOOK_SERVICE_URL=books:8080
+
+    restart: on-failure
