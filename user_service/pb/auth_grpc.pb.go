@@ -19,12 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_SignIn_FullMethodName     = "/auth.AuthService/SignIn"
-	AuthService_SignUp_FullMethodName     = "/auth.AuthService/SignUp"
-	AuthService_SignOut_FullMethodName    = "/auth.AuthService/SignOut"
-	AuthService_UpdateUser_FullMethodName = "/auth.AuthService/UpdateUser"
-	AuthService_DeleteUser_FullMethodName = "/auth.AuthService/DeleteUser"
-	AuthService_GetUsers_FullMethodName   = "/auth.AuthService/GetUsers"
+	AuthService_SignIn_FullMethodName         = "/auth.AuthService/SignIn"
+	AuthService_SignUp_FullMethodName         = "/auth.AuthService/SignUp"
+	AuthService_SignOut_FullMethodName        = "/auth.AuthService/SignOut"
+	AuthService_UpdateUser_FullMethodName     = "/auth.AuthService/UpdateUser"
+	AuthService_DeleteUser_FullMethodName     = "/auth.AuthService/DeleteUser"
+	AuthService_GetUsers_FullMethodName       = "/auth.AuthService/GetUsers"
+	AuthService_GetAccessToken_FullMethodName = "/auth.AuthService/GetAccessToken"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -37,6 +38,7 @@ type AuthServiceClient interface {
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
 	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
 	GetUsers(ctx context.Context, in *GetAllUserRequest, opts ...grpc.CallOption) (*GetAllUserResponse, error)
+	GetAccessToken(ctx context.Context, in *NewAccessTokenRequest, opts ...grpc.CallOption) (*NewAccessTokenResponse, error)
 }
 
 type authServiceClient struct {
@@ -107,6 +109,16 @@ func (c *authServiceClient) GetUsers(ctx context.Context, in *GetAllUserRequest,
 	return out, nil
 }
 
+func (c *authServiceClient) GetAccessToken(ctx context.Context, in *NewAccessTokenRequest, opts ...grpc.CallOption) (*NewAccessTokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NewAccessTokenResponse)
+	err := c.cc.Invoke(ctx, AuthService_GetAccessToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
@@ -117,6 +129,7 @@ type AuthServiceServer interface {
 	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
 	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
 	GetUsers(context.Context, *GetAllUserRequest) (*GetAllUserResponse, error)
+	GetAccessToken(context.Context, *NewAccessTokenRequest) (*NewAccessTokenResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -144,6 +157,9 @@ func (UnimplementedAuthServiceServer) DeleteUser(context.Context, *DeleteUserReq
 }
 func (UnimplementedAuthServiceServer) GetUsers(context.Context, *GetAllUserRequest) (*GetAllUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
+}
+func (UnimplementedAuthServiceServer) GetAccessToken(context.Context, *NewAccessTokenRequest) (*NewAccessTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAccessToken not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -274,6 +290,24 @@ func _AuthService_GetUsers_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_GetAccessToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NewAccessTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GetAccessToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_GetAccessToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GetAccessToken(ctx, req.(*NewAccessTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -304,6 +338,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUsers",
 			Handler:    _AuthService_GetUsers_Handler,
+		},
+		{
+			MethodName: "GetAccessToken",
+			Handler:    _AuthService_GetAccessToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

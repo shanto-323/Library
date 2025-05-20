@@ -11,29 +11,38 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/shanto-323/Library/books"
+	userservice "github.com/shanto-323/Library/user_service"
 )
 
 type Server struct {
-	IpAddr     string
-	bookClient *books.Client
+	IpAddr            string
+	bookClient        *books.Client
+	userServiceClient *userservice.Client
 }
 
-func NewServer(ipAddr string, bookClientUrl string) (*Server, error) {
+func NewServer(ipAddr string, bookClientUrl string, userServiceClientUrl string) (*Server, error) {
 	bookClient, err := books.NewClient(bookClientUrl)
 	if err != nil {
 		log.Println("NewServer Error", err)
 		return nil, err
 	}
 
+	userServiceClient, err := userservice.NewClient(userServiceClientUrl)
+	if err != nil {
+		log.Println("NewServer Error", err)
+		return nil, err
+	}
+
 	return &Server{
-		IpAddr:     ipAddr,
-		bookClient: bookClient,
+		IpAddr:            ipAddr,
+		bookClient:        bookClient,
+		userServiceClient: userServiceClient,
 	}, nil
 }
 
 func (s *Server) Start() error {
 	r := mux.NewRouter()
-	router := r.PathPrefix("/library/v1").Subrouter()
+	router := r.PathPrefix("/library/v2").Subrouter()
 
 	//books
 	bookRouter := router.PathPrefix("/books").Subrouter()
@@ -45,8 +54,38 @@ func (s *Server) Start() error {
 	bookRouter.HandleFunc("/{isbn}", createHandlerFunc(s.GetBookHandler)).Methods("GET")
 	bookRouter.HandleFunc("", createHandlerFunc(s.GetAllBooksHandler)).Methods("GET")
 
+	//user
+	userServiceRouter := router.PathPrefix("/user").Subrouter()
+	userServiceRouter.HandleFunc("", createHandlerFunc(s.SignUpHandler)).Methods("POST")
 	fmt.Println("Api running.. ")
 	return http.ListenAndServe(s.IpAddr, r)
+}
+
+func (s *Server) SignUpHandler(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	if r.Method != http.MethodPost {
+		return fmt.Errorf("invalid mathod")
+	}
+
+	if r.Body == nil {
+		return fmt.Errorf("request is null")
+	}
+	defer r.Body.Close()
+
+	user := &userservice.UserModel{}
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		return err
+	}
+
+	u, err := s.userServiceClient.SignUp(ctx, user.Name, user.Password, user.Email, user.Phone, user.UserType)
+	if err != nil {
+		return err
+	}
+
+	return WriteJson(w, u)
 }
 
 func (s *Server) CreateBookHandler(w http.ResponseWriter, r *http.Request) error {

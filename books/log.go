@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-var loger = *slog.New(slog.NewJSONHandler(os.Stdout, nil))
+var loger = *slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 type LogLevel = slog.Level
 

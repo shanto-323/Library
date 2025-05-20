@@ -743,6 +743,102 @@ func (x *GetAllUserResponse) GetUserModel() []*UserModel {
 	return nil
 }
 
+type NewAccessTokenRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	RefreshToken  string                 `protobuf:"bytes,2,opt,name=refreshToken,proto3" json:"refreshToken,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NewAccessTokenRequest) Reset() {
+	*x = NewAccessTokenRequest{}
+	mi := &file_auth_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NewAccessTokenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NewAccessTokenRequest) ProtoMessage() {}
+
+func (x *NewAccessTokenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NewAccessTokenRequest.ProtoReflect.Descriptor instead.
+func (*NewAccessTokenRequest) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *NewAccessTokenRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *NewAccessTokenRequest) GetRefreshToken() string {
+	if x != nil {
+		return x.RefreshToken
+	}
+	return ""
+}
+
+type NewAccessTokenResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NewAccessTokenResponse) Reset() {
+	*x = NewAccessTokenResponse{}
+	mi := &file_auth_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NewAccessTokenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NewAccessTokenResponse) ProtoMessage() {}
+
+func (x *NewAccessTokenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NewAccessTokenResponse.ProtoReflect.Descriptor instead.
+func (*NewAccessTokenResponse) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *NewAccessTokenResponse) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
 var File_auth_proto protoreflect.FileDescriptor
 
 const file_auth_proto_rawDesc = "" +
@@ -794,7 +890,12 @@ const file_auth_proto_rawDesc = "" +
 	"totalPages\x12\x1d\n" +
 	"\n" +
 	"total_user\x18\x02 \x01(\x03R\ttotalUser\x12-\n" +
-	"\tuserModel\x18\x03 \x03(\v2\x0f.auth.UserModelR\tuserModel2\xf0\x02\n" +
+	"\tuserModel\x18\x03 \x03(\v2\x0f.auth.UserModelR\tuserModel\"K\n" +
+	"\x15NewAccessTokenRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\"\n" +
+	"\frefreshToken\x18\x02 \x01(\tR\frefreshToken\".\n" +
+	"\x16NewAccessTokenResponse\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token2\xbd\x03\n" +
 	"\vAuthService\x123\n" +
 	"\x06SignIn\x12\x13.auth.SignInRequest\x1a\x14.auth.SignInResponse\x123\n" +
 	"\x06SignUp\x12\x13.auth.SignUpRequest\x1a\x14.auth.SignUpResponse\x126\n" +
@@ -803,7 +904,8 @@ const file_auth_proto_rawDesc = "" +
 	"UpdateUser\x12\x17.auth.UpdateUserRequest\x1a\x18.auth.UpdateUserResponse\x12?\n" +
 	"\n" +
 	"DeleteUser\x12\x17.auth.DeleteUserRequest\x1a\x18.auth.DeleteUserResponse\x12=\n" +
-	"\bGetUsers\x12\x17.auth.GetAllUserRequest\x1a\x18.auth.GetAllUserResponseB\x06Z\x04./pbb\x06proto3"
+	"\bGetUsers\x12\x17.auth.GetAllUserRequest\x1a\x18.auth.GetAllUserResponse\x12K\n" +
+	"\x0eGetAccessToken\x12\x1b.auth.NewAccessTokenRequest\x1a\x1c.auth.NewAccessTokenResponseB\x06Z\x04./pbb\x06proto3"
 
 var (
 	file_auth_proto_rawDescOnce sync.Once
@@ -817,28 +919,30 @@ func file_auth_proto_rawDescGZIP() []byte {
 	return file_auth_proto_rawDescData
 }
 
-var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_auth_proto_goTypes = []any{
-	(*User)(nil),                  // 0: auth.User
-	(*UserModel)(nil),             // 1: auth.UserModel
-	(*SignUpRequest)(nil),         // 2: auth.SignUpRequest
-	(*SignUpResponse)(nil),        // 3: auth.SignUpResponse
-	(*SignInRequest)(nil),         // 4: auth.SignInRequest
-	(*SignInResponse)(nil),        // 5: auth.SignInResponse
-	(*SignOutRequest)(nil),        // 6: auth.SignOutRequest
-	(*SignOutResponse)(nil),       // 7: auth.SignOutResponse
-	(*UpdateUserRequest)(nil),     // 8: auth.UpdateUserRequest
-	(*UpdateUserResponse)(nil),    // 9: auth.UpdateUserResponse
-	(*DeleteUserRequest)(nil),     // 10: auth.DeleteUserRequest
-	(*DeleteUserResponse)(nil),    // 11: auth.DeleteUserResponse
-	(*GetAllUserRequest)(nil),     // 12: auth.GetAllUserRequest
-	(*GetAllUserResponse)(nil),    // 13: auth.GetAllUserResponse
-	(*timestamppb.Timestamp)(nil), // 14: google.protobuf.Timestamp
+	(*User)(nil),                   // 0: auth.User
+	(*UserModel)(nil),              // 1: auth.UserModel
+	(*SignUpRequest)(nil),          // 2: auth.SignUpRequest
+	(*SignUpResponse)(nil),         // 3: auth.SignUpResponse
+	(*SignInRequest)(nil),          // 4: auth.SignInRequest
+	(*SignInResponse)(nil),         // 5: auth.SignInResponse
+	(*SignOutRequest)(nil),         // 6: auth.SignOutRequest
+	(*SignOutResponse)(nil),        // 7: auth.SignOutResponse
+	(*UpdateUserRequest)(nil),      // 8: auth.UpdateUserRequest
+	(*UpdateUserResponse)(nil),     // 9: auth.UpdateUserResponse
+	(*DeleteUserRequest)(nil),      // 10: auth.DeleteUserRequest
+	(*DeleteUserResponse)(nil),     // 11: auth.DeleteUserResponse
+	(*GetAllUserRequest)(nil),      // 12: auth.GetAllUserRequest
+	(*GetAllUserResponse)(nil),     // 13: auth.GetAllUserResponse
+	(*NewAccessTokenRequest)(nil),  // 14: auth.NewAccessTokenRequest
+	(*NewAccessTokenResponse)(nil), // 15: auth.NewAccessTokenResponse
+	(*timestamppb.Timestamp)(nil),  // 16: google.protobuf.Timestamp
 }
 var file_auth_proto_depIdxs = []int32{
 	0,  // 0: auth.UserModel.user:type_name -> auth.User
-	14, // 1: auth.UserModel.createdAt:type_name -> google.protobuf.Timestamp
-	14, // 2: auth.UserModel.updatedAt:type_name -> google.protobuf.Timestamp
+	16, // 1: auth.UserModel.createdAt:type_name -> google.protobuf.Timestamp
+	16, // 2: auth.UserModel.updatedAt:type_name -> google.protobuf.Timestamp
 	0,  // 3: auth.SignUpRequest.user:type_name -> auth.User
 	1,  // 4: auth.SignUpResponse.userModel:type_name -> auth.UserModel
 	1,  // 5: auth.SignInResponse.userModel:type_name -> auth.UserModel
@@ -851,14 +955,16 @@ var file_auth_proto_depIdxs = []int32{
 	8,  // 12: auth.AuthService.UpdateUser:input_type -> auth.UpdateUserRequest
 	10, // 13: auth.AuthService.DeleteUser:input_type -> auth.DeleteUserRequest
 	12, // 14: auth.AuthService.GetUsers:input_type -> auth.GetAllUserRequest
-	5,  // 15: auth.AuthService.SignIn:output_type -> auth.SignInResponse
-	3,  // 16: auth.AuthService.SignUp:output_type -> auth.SignUpResponse
-	7,  // 17: auth.AuthService.SignOut:output_type -> auth.SignOutResponse
-	9,  // 18: auth.AuthService.UpdateUser:output_type -> auth.UpdateUserResponse
-	11, // 19: auth.AuthService.DeleteUser:output_type -> auth.DeleteUserResponse
-	13, // 20: auth.AuthService.GetUsers:output_type -> auth.GetAllUserResponse
-	15, // [15:21] is the sub-list for method output_type
-	9,  // [9:15] is the sub-list for method input_type
+	14, // 15: auth.AuthService.GetAccessToken:input_type -> auth.NewAccessTokenRequest
+	5,  // 16: auth.AuthService.SignIn:output_type -> auth.SignInResponse
+	3,  // 17: auth.AuthService.SignUp:output_type -> auth.SignUpResponse
+	7,  // 18: auth.AuthService.SignOut:output_type -> auth.SignOutResponse
+	9,  // 19: auth.AuthService.UpdateUser:output_type -> auth.UpdateUserResponse
+	11, // 20: auth.AuthService.DeleteUser:output_type -> auth.DeleteUserResponse
+	13, // 21: auth.AuthService.GetUsers:output_type -> auth.GetAllUserResponse
+	15, // 22: auth.AuthService.GetAccessToken:output_type -> auth.NewAccessTokenResponse
+	16, // [16:23] is the sub-list for method output_type
+	9,  // [9:16] is the sub-list for method input_type
 	9,  // [9:9] is the sub-list for extension type_name
 	9,  // [9:9] is the sub-list for extension extendee
 	0,  // [0:9] is the sub-list for field type_name
@@ -875,7 +981,7 @@ func file_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_proto_rawDesc), len(file_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

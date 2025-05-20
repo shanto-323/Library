@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"log/slog"
 	"time"
 
 	"github.com/shanto-323/Library/books"
@@ -35,7 +36,7 @@ func main() {
 		},
 	)
 
-	log.Println("database server running on port 8080")
+	books.LogInfo(slog.LevelInfo, "MAIN", "User-Service running on port 8080 ...")
 	s := books.NewBookService(r)
 	log.Fatal(books.ListenGRPC(s, ":8080"))
 }

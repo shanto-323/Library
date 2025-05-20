@@ -8,7 +8,7 @@ import (
 )
 
 // Dont do that
-var SECRET_KEY string = "SET_YOUR_JWT_KEY"
+var SECRET_KEY = []byte("SET_YOUR_JWT_KEY")
 
 type SignInDetails struct {
 	Email     string

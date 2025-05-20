@@ -8,6 +8,21 @@ services:
       - xpack.security.enabled=false
     ports:
       - "9200:9200"
+    restart: on-failure
+
+  postgres:
+    image: postgres:latest
+    container_name: newPostgres1
+    environment:
+      POSTGRES_USER: shanto
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: shanto323
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    restart: on-failure
+
   books:
     build:
       context: .
@@ -16,7 +31,17 @@ services:
       - elasticsearch
     environment:
       - DATABASE_DSN=http://elasticsearch:9200
+    restart: on-failure
 
+  user_service:
+    build:
+      context: .
+      dockerfile: ./user_service/app.dockerfile
+    depends_on:
+      - postgres
+      - books
+    environment:
+      - DATABASE_DSN=postgres://shanto:123456@postgres:5432/shanto323?sslmode=disable
     restart: on-failure
 
   rest:
@@ -27,7 +52,11 @@ services:
       - 8080:8080
     depends_on:
       - books
+      - user_service
     environment:
       - BOOK_SERVICE_URL=books:8080
-
+      - USER_SERVICE_URL=user_service:8080
     restart: on-failure
+
+volumes:
+  pgdata: {}

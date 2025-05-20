@@ -7,7 +7,8 @@ import (
 )
 
 type Config struct {
-	BookClient string `envconfig:"BOOK_SERVICE_URL"`
+	BookClient        string `envconfig:"BOOK_SERVICE_URL"`
+	UserServiceClient string `envconfig:"USER_SERVICE_URL"`
 }
 
 func main() {
@@ -17,7 +18,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	s, err := NewServer(":8080", cfg.BookClient)
+	s, err := NewServer(":8080", cfg.BookClient, cfg.UserServiceClient)
 	if err != nil {
 		log.Fatal(err)
 	}

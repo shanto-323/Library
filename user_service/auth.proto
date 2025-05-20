@@ -49,6 +49,13 @@ message GetAllUserResponse {
   repeated UserModel userModel = 3;
 }
 
+message NewAccessTokenRequest {
+  string id = 1;
+  string refreshToken = 2;
+}
+
+message NewAccessTokenResponse { string token = 1; }
+
 service AuthService {
   rpc SignIn(SignInRequest) returns (SignInResponse);
   rpc SignUp(SignUpRequest) returns (SignUpResponse);
@@ -56,4 +63,5 @@ service AuthService {
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
   rpc GetUsers(GetAllUserRequest) returns (GetAllUserResponse);
+  rpc GetAccessToken(NewAccessTokenRequest) returns (NewAccessTokenResponse);
 }

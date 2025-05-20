@@ -157,3 +157,14 @@ func (sr *grpcServer) GetUsers(ctx context.Context, r *pb.GetAllUserRequest) (*p
 		UserModel:  userModelList,
 	}, nil
 }
+
+func (sr *grpcServer) GetAccessToken(ctx context.Context, r *pb.NewAccessTokenRequest) (*pb.NewAccessTokenResponse, error) {
+	token, err := sr.service.NewToken(ctx, r.Id, r.RefreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.NewAccessTokenResponse{
+		Token: token,
+	}, nil
+}

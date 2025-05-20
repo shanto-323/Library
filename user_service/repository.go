@@ -2,10 +2,12 @@ package userservice
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	_ "github.com/lib/pq"
 	"github.com/shanto-323/Library/books"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -23,10 +25,20 @@ type userRepository struct {
 	db *gorm.DB
 }
 
-func NewUserRepostiry(db *gorm.DB) Repository {
+func NewUserRepostiry(dsn string) (Repository, error) {
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		books.LogError(slog.LevelError, "DATABASE", err, fmt.Sprintf("failed to create database %s", dsn))
+		return nil, err
+	}
+
+	if err := db.AutoMigrate(&UserModel{}); err != nil {
+		books.LogError(slog.LevelError, "DATABASE", err, fmt.Sprintf("failed to migrate database %s", dsn))
+		return nil, err
+	}
 	return &userRepository{
 		db: db,
-	}
+	}, nil
 }
 
 func (r *userRepository) CreateUser(ctx context.Context, u *UserModel) error {
