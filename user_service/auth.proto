@@ -1,0 +1,59 @@
+syntax = "proto3";
+package auth;
+
+option go_package = "./pb";
+import "google/protobuf/timestamp.proto";
+// Outgoing Model
+message User {
+  string id = 1;
+  string name = 2;
+  string password = 3;
+  string email = 5;
+  string phone = 6;
+  string user_type = 8;
+}
+
+message UserModel {
+  User user = 1;
+  string token = 2;
+  string refreshToken = 3;
+  google.protobuf.Timestamp createdAt = 4;
+  google.protobuf.Timestamp updatedAt = 5;
+}
+
+message SignUpRequest { User user = 1; }
+message SignUpResponse { UserModel userModel = 1; }
+
+message SignInRequest {
+  string email = 1;
+  string password = 2;
+}
+message SignInResponse { UserModel userModel = 1; }
+
+message SignOutRequest { string id = 1; }
+message SignOutResponse { string msg = 1; }
+
+message UpdateUserRequest { User user = 1; }
+message UpdateUserResponse { UserModel userModel = 1; }
+
+message DeleteUserRequest { string id = 1; }
+message DeleteUserResponse { string msg = 1; }
+
+message GetAllUserRequest {
+  int64 limit = 1;
+  int64 offset = 2;
+}
+message GetAllUserResponse {
+  int64 total_pages = 1;
+  int64 total_user = 2;
+  repeated UserModel userModel = 3;
+}
+
+service AuthService {
+  rpc SignIn(SignInRequest) returns (SignInResponse);
+  rpc SignUp(SignUpRequest) returns (SignUpResponse);
+  rpc SignOut(SignOutRequest) returns (SignOutResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+  rpc GetUsers(GetAllUserRequest) returns (GetAllUserResponse);
+}
