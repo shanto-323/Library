@@ -9,6 +9,7 @@ package pb
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -23,14 +24,13 @@ const (
 
 type Book struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	Isbn          string                 `protobuf:"bytes,3,opt,name=isbn,proto3" json:"isbn,omitempty"`
-	Writer        string                 `protobuf:"bytes,4,opt,name=writer,proto3" json:"writer,omitempty"`
-	TotalCopies   uint64                 `protobuf:"varint,5,opt,name=total_copies,json=totalCopies,proto3" json:"total_copies,omitempty"`
-	OnLoan        uint64                 `protobuf:"varint,6,opt,name=on_loan,json=onLoan,proto3" json:"on_loan,omitempty"`
-	CratedAt      string                 `protobuf:"bytes,7,opt,name=crated_at,json=cratedAt,proto3" json:"crated_at,omitempty"`
-	UpdatedAt     string                 `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	Isbn          string                 `protobuf:"bytes,2,opt,name=isbn,proto3" json:"isbn,omitempty"`
+	Writer        string                 `protobuf:"bytes,3,opt,name=writer,proto3" json:"writer,omitempty"`
+	TotalCopies   uint64                 `protobuf:"varint,4,opt,name=total_copies,json=totalCopies,proto3" json:"total_copies,omitempty"`
+	OnLoan        uint64                 `protobuf:"varint,5,opt,name=on_loan,json=onLoan,proto3" json:"on_loan,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -63,13 +63,6 @@ func (x *Book) ProtoReflect() protoreflect.Message {
 // Deprecated: Use Book.ProtoReflect.Descriptor instead.
 func (*Book) Descriptor() ([]byte, []int) {
 	return file_books_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *Book) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
 }
 
 func (x *Book) GetTitle() string {
@@ -107,18 +100,18 @@ func (x *Book) GetOnLoan() uint64 {
 	return 0
 }
 
-func (x *Book) GetCratedAt() string {
+func (x *Book) GetCreatedAt() *timestamppb.Timestamp {
 	if x != nil {
-		return x.CratedAt
+		return x.CreatedAt
 	}
-	return ""
+	return nil
 }
 
-func (x *Book) GetUpdatedAt() string {
+func (x *Book) GetUpdatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedAt
 	}
-	return ""
+	return nil
 }
 
 type CreateBookRequest struct {
@@ -507,8 +500,8 @@ func (x *DeleteBookResponse) GetMsg() string {
 
 type GetAllBookRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Limit         uint64                 `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
-	Offset        uint64                 `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	Limit         int64                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset        int64                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -543,14 +536,14 @@ func (*GetAllBookRequest) Descriptor() ([]byte, []int) {
 	return file_books_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *GetAllBookRequest) GetLimit() uint64 {
+func (x *GetAllBookRequest) GetLimit() int64 {
 	if x != nil {
 		return x.Limit
 	}
 	return 0
 }
 
-func (x *GetAllBookRequest) GetOffset() uint64 {
+func (x *GetAllBookRequest) GetOffset() int64 {
 	if x != nil {
 		return x.Offset
 	}
@@ -559,7 +552,9 @@ func (x *GetAllBookRequest) GetOffset() uint64 {
 
 type GetAllBookResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Book          []*Book                `protobuf:"bytes,1,rep,name=book,proto3" json:"book,omitempty"`
+	TotalPages    int64                  `protobuf:"varint,1,opt,name=total_pages,json=totalPages,proto3" json:"total_pages,omitempty"`
+	TotalBooks    int64                  `protobuf:"varint,2,opt,name=total_books,json=totalBooks,proto3" json:"total_books,omitempty"`
+	Books         []*Book                `protobuf:"bytes,3,rep,name=books,proto3" json:"books,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -594,9 +589,23 @@ func (*GetAllBookResponse) Descriptor() ([]byte, []int) {
 	return file_books_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *GetAllBookResponse) GetBook() []*Book {
+func (x *GetAllBookResponse) GetTotalPages() int64 {
 	if x != nil {
-		return x.Book
+		return x.TotalPages
+	}
+	return 0
+}
+
+func (x *GetAllBookResponse) GetTotalBooks() int64 {
+	if x != nil {
+		return x.TotalBooks
+	}
+	return 0
+}
+
+func (x *GetAllBookResponse) GetBooks() []*Book {
+	if x != nil {
+		return x.Books
 	}
 	return nil
 }
@@ -604,8 +613,8 @@ func (x *GetAllBookResponse) GetBook() []*Book {
 type SearchBookRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Query         string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
-	Limit         uint64                 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
-	Offset        uint64                 `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
+	Limit         int64                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset        int64                  `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -647,14 +656,14 @@ func (x *SearchBookRequest) GetQuery() string {
 	return ""
 }
 
-func (x *SearchBookRequest) GetLimit() uint64 {
+func (x *SearchBookRequest) GetLimit() int64 {
 	if x != nil {
 		return x.Limit
 	}
 	return 0
 }
 
-func (x *SearchBookRequest) GetOffset() uint64 {
+func (x *SearchBookRequest) GetOffset() int64 {
 	if x != nil {
 		return x.Offset
 	}
@@ -663,7 +672,9 @@ func (x *SearchBookRequest) GetOffset() uint64 {
 
 type SearchBookResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Book          []*Book                `protobuf:"bytes,1,rep,name=book,proto3" json:"book,omitempty"`
+	TotalPages    int64                  `protobuf:"varint,1,opt,name=total_pages,json=totalPages,proto3" json:"total_pages,omitempty"`
+	TotalBooks    int64                  `protobuf:"varint,2,opt,name=total_books,json=totalBooks,proto3" json:"total_books,omitempty"`
+	Books         []*Book                `protobuf:"bytes,3,rep,name=books,proto3" json:"books,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -698,9 +709,23 @@ func (*SearchBookResponse) Descriptor() ([]byte, []int) {
 	return file_books_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *SearchBookResponse) GetBook() []*Book {
+func (x *SearchBookResponse) GetTotalPages() int64 {
 	if x != nil {
-		return x.Book
+		return x.TotalPages
+	}
+	return 0
+}
+
+func (x *SearchBookResponse) GetTotalBooks() int64 {
+	if x != nil {
+		return x.TotalBooks
+	}
+	return 0
+}
+
+func (x *SearchBookResponse) GetBooks() []*Book {
+	if x != nil {
+		return x.Books
 	}
 	return nil
 }
@@ -709,17 +734,17 @@ var File_books_proto protoreflect.FileDescriptor
 
 const file_books_proto_rawDesc = "" +
 	"\n" +
-	"\vbooks.proto\x12\x02pb\"\xd0\x01\n" +
-	"\x04Book\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12\x12\n" +
-	"\x04isbn\x18\x03 \x01(\tR\x04isbn\x12\x16\n" +
-	"\x06writer\x18\x04 \x01(\tR\x06writer\x12!\n" +
-	"\ftotal_copies\x18\x05 \x01(\x04R\vtotalCopies\x12\x17\n" +
-	"\aon_loan\x18\x06 \x01(\x04R\x06onLoan\x12\x1b\n" +
-	"\tcrated_at\x18\a \x01(\tR\bcratedAt\x12\x1d\n" +
+	"\vbooks.proto\x12\x02pb\x1a\x1fgoogle/protobuf/timestamp.proto\"\xfa\x01\n" +
+	"\x04Book\x12\x14\n" +
+	"\x05title\x18\x01 \x01(\tR\x05title\x12\x12\n" +
+	"\x04isbn\x18\x02 \x01(\tR\x04isbn\x12\x16\n" +
+	"\x06writer\x18\x03 \x01(\tR\x06writer\x12!\n" +
+	"\ftotal_copies\x18\x04 \x01(\x04R\vtotalCopies\x12\x17\n" +
+	"\aon_loan\x18\x05 \x01(\x04R\x06onLoan\x129\n" +
 	"\n" +
-	"updated_at\x18\b \x01(\tR\tupdatedAt\"\x91\x01\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x91\x01\n" +
 	"\x11CreateBookRequest\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x12\n" +
 	"\x04isbn\x18\x02 \x01(\tR\x04isbn\x12\x16\n" +
@@ -741,16 +766,24 @@ const file_books_proto_rawDesc = "" +
 	"\x12DeleteBookResponse\x12\x10\n" +
 	"\x03msg\x18\x01 \x01(\tR\x03msg\"A\n" +
 	"\x11GetAllBookRequest\x12\x14\n" +
-	"\x05limit\x18\x01 \x01(\x04R\x05limit\x12\x16\n" +
-	"\x06offset\x18\x02 \x01(\x04R\x06offset\"2\n" +
-	"\x12GetAllBookResponse\x12\x1c\n" +
-	"\x04book\x18\x01 \x03(\v2\b.pb.BookR\x04book\"W\n" +
+	"\x05limit\x18\x01 \x01(\x03R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x02 \x01(\x03R\x06offset\"v\n" +
+	"\x12GetAllBookResponse\x12\x1f\n" +
+	"\vtotal_pages\x18\x01 \x01(\x03R\n" +
+	"totalPages\x12\x1f\n" +
+	"\vtotal_books\x18\x02 \x01(\x03R\n" +
+	"totalBooks\x12\x1e\n" +
+	"\x05books\x18\x03 \x03(\v2\b.pb.BookR\x05books\"W\n" +
 	"\x11SearchBookRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x04R\x05limit\x12\x16\n" +
-	"\x06offset\x18\x03 \x01(\x04R\x06offset\"2\n" +
-	"\x12SearchBookResponse\x12\x1c\n" +
-	"\x04book\x18\x01 \x03(\v2\b.pb.BookR\x04book2\xf4\x02\n" +
+	"\x05limit\x18\x02 \x01(\x03R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x03 \x01(\x03R\x06offset\"v\n" +
+	"\x12SearchBookResponse\x12\x1f\n" +
+	"\vtotal_pages\x18\x01 \x01(\x03R\n" +
+	"totalPages\x12\x1f\n" +
+	"\vtotal_books\x18\x02 \x01(\x03R\n" +
+	"totalBooks\x12\x1e\n" +
+	"\x05books\x18\x03 \x03(\v2\b.pb.BookR\x05books2\xf4\x02\n" +
 	"\vBookService\x12=\n" +
 	"\n" +
 	"CreateBook\x12\x15.pb.CreateBookRequest\x1a\x16.pb.CreateBookResponse\"\x00\x122\n" +
@@ -778,43 +811,46 @@ func file_books_proto_rawDescGZIP() []byte {
 
 var file_books_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_books_proto_goTypes = []any{
-	(*Book)(nil),               // 0: pb.Book
-	(*CreateBookRequest)(nil),  // 1: pb.CreateBookRequest
-	(*CreateBookResponse)(nil), // 2: pb.CreateBookResponse
-	(*GetBookRequest)(nil),     // 3: pb.GetBookRequest
-	(*GetBookResponse)(nil),    // 4: pb.GetBookResponse
-	(*UpdateBookRequest)(nil),  // 5: pb.UpdateBookRequest
-	(*UpdateBookResponse)(nil), // 6: pb.UpdateBookResponse
-	(*DeleteBookRequest)(nil),  // 7: pb.DeleteBookRequest
-	(*DeleteBookResponse)(nil), // 8: pb.DeleteBookResponse
-	(*GetAllBookRequest)(nil),  // 9: pb.GetAllBookRequest
-	(*GetAllBookResponse)(nil), // 10: pb.GetAllBookResponse
-	(*SearchBookRequest)(nil),  // 11: pb.SearchBookRequest
-	(*SearchBookResponse)(nil), // 12: pb.SearchBookResponse
+	(*Book)(nil),                  // 0: pb.Book
+	(*CreateBookRequest)(nil),     // 1: pb.CreateBookRequest
+	(*CreateBookResponse)(nil),    // 2: pb.CreateBookResponse
+	(*GetBookRequest)(nil),        // 3: pb.GetBookRequest
+	(*GetBookResponse)(nil),       // 4: pb.GetBookResponse
+	(*UpdateBookRequest)(nil),     // 5: pb.UpdateBookRequest
+	(*UpdateBookResponse)(nil),    // 6: pb.UpdateBookResponse
+	(*DeleteBookRequest)(nil),     // 7: pb.DeleteBookRequest
+	(*DeleteBookResponse)(nil),    // 8: pb.DeleteBookResponse
+	(*GetAllBookRequest)(nil),     // 9: pb.GetAllBookRequest
+	(*GetAllBookResponse)(nil),    // 10: pb.GetAllBookResponse
+	(*SearchBookRequest)(nil),     // 11: pb.SearchBookRequest
+	(*SearchBookResponse)(nil),    // 12: pb.SearchBookResponse
+	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
 }
 var file_books_proto_depIdxs = []int32{
-	0,  // 0: pb.CreateBookResponse.Book:type_name -> pb.Book
-	0,  // 1: pb.GetBookResponse.book:type_name -> pb.Book
-	0,  // 2: pb.UpdateBookRequest.book:type_name -> pb.Book
-	0,  // 3: pb.GetAllBookResponse.book:type_name -> pb.Book
-	0,  // 4: pb.SearchBookResponse.book:type_name -> pb.Book
-	1,  // 5: pb.BookService.CreateBook:input_type -> pb.CreateBookRequest
-	3,  // 6: pb.BookService.GetBook:input_type -> pb.GetBookRequest
-	5,  // 7: pb.BookService.UpdateBook:input_type -> pb.UpdateBookRequest
-	7,  // 8: pb.BookService.DeleteBook:input_type -> pb.DeleteBookRequest
-	9,  // 9: pb.BookService.GetAllBook:input_type -> pb.GetAllBookRequest
-	11, // 10: pb.BookService.SearchBook:input_type -> pb.SearchBookRequest
-	2,  // 11: pb.BookService.CreateBook:output_type -> pb.CreateBookResponse
-	4,  // 12: pb.BookService.GetBook:output_type -> pb.GetBookResponse
-	6,  // 13: pb.BookService.UpdateBook:output_type -> pb.UpdateBookResponse
-	8,  // 14: pb.BookService.DeleteBook:output_type -> pb.DeleteBookResponse
-	10, // 15: pb.BookService.GetAllBook:output_type -> pb.GetAllBookResponse
-	12, // 16: pb.BookService.SearchBook:output_type -> pb.SearchBookResponse
-	11, // [11:17] is the sub-list for method output_type
-	5,  // [5:11] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	13, // 0: pb.Book.created_at:type_name -> google.protobuf.Timestamp
+	13, // 1: pb.Book.updated_at:type_name -> google.protobuf.Timestamp
+	0,  // 2: pb.CreateBookResponse.Book:type_name -> pb.Book
+	0,  // 3: pb.GetBookResponse.book:type_name -> pb.Book
+	0,  // 4: pb.UpdateBookRequest.book:type_name -> pb.Book
+	0,  // 5: pb.GetAllBookResponse.books:type_name -> pb.Book
+	0,  // 6: pb.SearchBookResponse.books:type_name -> pb.Book
+	1,  // 7: pb.BookService.CreateBook:input_type -> pb.CreateBookRequest
+	3,  // 8: pb.BookService.GetBook:input_type -> pb.GetBookRequest
+	5,  // 9: pb.BookService.UpdateBook:input_type -> pb.UpdateBookRequest
+	7,  // 10: pb.BookService.DeleteBook:input_type -> pb.DeleteBookRequest
+	9,  // 11: pb.BookService.GetAllBook:input_type -> pb.GetAllBookRequest
+	11, // 12: pb.BookService.SearchBook:input_type -> pb.SearchBookRequest
+	2,  // 13: pb.BookService.CreateBook:output_type -> pb.CreateBookResponse
+	4,  // 14: pb.BookService.GetBook:output_type -> pb.GetBookResponse
+	6,  // 15: pb.BookService.UpdateBook:output_type -> pb.UpdateBookResponse
+	8,  // 16: pb.BookService.DeleteBook:output_type -> pb.DeleteBookResponse
+	10, // 17: pb.BookService.GetAllBook:output_type -> pb.GetAllBookResponse
+	12, // 18: pb.BookService.SearchBook:output_type -> pb.SearchBookResponse
+	13, // [13:19] is the sub-list for method output_type
+	7,  // [7:13] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_books_proto_init() }

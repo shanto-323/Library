@@ -3,12 +3,11 @@ package books
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net"
-	"time"
 
 	"github.com/shanto-323/Library/books/pb"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type grpcServer struct {
@@ -32,14 +31,6 @@ func ListenGRPC(s Service, port string) error {
 func (sr *grpcServer) CreateBook(ctx context.Context, r *pb.CreateBookRequest) (*pb.CreateBookResponse, error) {
 	book, err := sr.service.NewBook(ctx, r.Title, r.Isbn, r.Writer, r.TotalCopies, r.OnLoan)
 	if err != nil {
-		SlogLogger(
-			LogType{
-				L: slog.LevelError,
-				M: "Server",
-				E: err,
-				D: "New book",
-			},
-		)
 		return nil, err
 	}
 	return &pb.CreateBookResponse{Book: &pb.Book{
@@ -48,20 +39,19 @@ func (sr *grpcServer) CreateBook(ctx context.Context, r *pb.CreateBookRequest) (
 		Writer:      book.Writer,
 		TotalCopies: book.TotalCopies,
 		OnLoan:      book.OnLoan,
-		CratedAt:    book.CreatedAt.Format(time.RFC3339), //use time  book.Book
-		UpdatedAt:   book.UpdatedAt.Format(time.RFC3339),
+		CreatedAt:   timestamppb.New(book.CreatedAt),
+		UpdatedAt:   timestamppb.New(book.UpdatedAt),
 	}}, nil
 }
 
 func (sr *grpcServer) UpdateBook(ctx context.Context, r *pb.UpdateBookRequest) (*pb.UpdateBookResponse, error) {
 	book := r.Book
-	err := sr.service.UpdateBook(ctx, Book{
+	err := sr.service.UpdateBook(ctx, &Book{
 		Title:       book.Title,
 		ISBN:        book.Isbn,
 		Writer:      book.Writer,
 		TotalCopies: book.TotalCopies,
 		OnLoan:      book.OnLoan,
-		UpdatedAt:   time.Now(),
 	})
 
 	if err != nil {
@@ -83,33 +73,12 @@ func (sr *grpcServer) DeleteBook(ctx context.Context, r *pb.DeleteBookRequest) (
 }
 
 func (sr *grpcServer) GetBook(ctx context.Context, r *pb.GetBookRequest) (*pb.GetBookResponse, error) {
-	if r.Isbn == "" {
-		SlogLogger(
-			LogType{
-				L: slog.LevelError,
-				M: "Server",
-				E: fmt.Errorf("isbn is empty"),
-				D: "Get Book",
-			},
-		)
-	}
-
 	book, err := sr.service.GetBook(ctx, r.Isbn)
 	if err != nil {
 		return nil, err
 	}
 
 	if book == nil {
-		if r.Isbn == "" {
-			SlogLogger(
-				LogType{
-					L: slog.LevelError,
-					M: "Server",
-					E: fmt.Errorf("isbn is empty %s", r.Isbn),
-					D: "Get Book",
-				},
-			)
-		}
 		return nil, fmt.Errorf("isbn is empty %s", r.Isbn)
 	}
 
@@ -119,8 +88,8 @@ func (sr *grpcServer) GetBook(ctx context.Context, r *pb.GetBookRequest) (*pb.Ge
 		Writer:      book.Writer,
 		TotalCopies: book.TotalCopies,
 		OnLoan:      book.OnLoan,
-		CratedAt:    book.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:   book.UpdatedAt.Format(time.RFC3339),
+		CreatedAt:   timestamppb.New(book.CreatedAt),
+		UpdatedAt:   timestamppb.New(book.UpdatedAt),
 	}}, nil
 }
 
@@ -131,21 +100,23 @@ func (sr *grpcServer) GetAllBook(ctx context.Context, r *pb.GetAllBookRequest) (
 	}
 
 	pbBook := []*pb.Book{}
-	for _, book := range books {
+	for _, book := range books.Books {
 		b := &pb.Book{
 			Title:       book.Title,
 			Isbn:        book.ISBN,
 			Writer:      book.Writer,
 			TotalCopies: book.TotalCopies,
 			OnLoan:      book.OnLoan,
-			CratedAt:    book.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:   book.UpdatedAt.Format(time.RFC3339),
+			CreatedAt:   timestamppb.New(book.CreatedAt),
+			UpdatedAt:   timestamppb.New(book.UpdatedAt),
 		}
 		pbBook = append(pbBook, b)
 	}
 
 	return &pb.GetAllBookResponse{
-		Book: pbBook,
+		TotalPages: int64(books.TotalPage),
+		TotalBooks: int64(books.TotalBooks),
+		Books:      pbBook,
 	}, nil
 }
 
@@ -156,20 +127,22 @@ func (sr *grpcServer) SearchBook(ctx context.Context, r *pb.SearchBookRequest) (
 	}
 
 	pbBook := []*pb.Book{}
-	for _, book := range books {
+	for _, book := range books.Books {
 		b := &pb.Book{
 			Title:       book.Title,
 			Isbn:        book.ISBN,
 			Writer:      book.Writer,
 			TotalCopies: book.TotalCopies,
 			OnLoan:      book.OnLoan,
-			CratedAt:    book.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:   book.UpdatedAt.Format(time.RFC3339),
+			CreatedAt:   timestamppb.New(book.CreatedAt),
+			UpdatedAt:   timestamppb.New(book.UpdatedAt),
 		}
 		pbBook = append(pbBook, b)
 	}
 
 	return &pb.SearchBookResponse{
-		Book: pbBook,
+		TotalPages: int64(books.TotalPage),
+		TotalBooks: int64(books.TotalBooks),
+		Books:      pbBook,
 	}, nil
 }

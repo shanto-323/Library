@@ -3,16 +3,16 @@ syntax = "proto3";
 package pb;
 
 option go_package = "./pb";
+import "google/protobuf/timestamp.proto";
 
 message Book {
-  string id = 1;
-  string title = 2;
-  string isbn = 3;
-  string writer = 4;
-  uint64 total_copies = 5;
-  uint64 on_loan = 6;
-  string crated_at = 7;
-  string updated_at = 8;
+  string title = 1;
+  string isbn = 2;
+  string writer = 3;
+  uint64 total_copies = 4;
+  uint64 on_loan = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
 }
 
 message CreateBookRequest {
@@ -34,17 +34,25 @@ message DeleteBookRequest { string isbn = 1; }
 message DeleteBookResponse { string msg = 1; }
 
 message GetAllBookRequest {
-  uint64 limit = 1;
-  uint64 offset = 2;
+  int64 limit = 1;
+  int64 offset = 2;
 }
-message GetAllBookResponse { repeated Book book = 1; }
+message GetAllBookResponse {
+  int64 total_pages = 1;
+  int64 total_books = 2;
+  repeated Book books = 3;
+}
 
 message SearchBookRequest {
   string query = 1;
-  uint64 limit = 2;
-  uint64 offset = 3;
+  int64 limit = 2;
+  int64 offset = 3;
 }
-message SearchBookResponse { repeated Book book = 1; }
+message SearchBookResponse {
+  int64 total_pages = 1;
+  int64 total_books = 2;
+  repeated Book books = 3;
+}
 
 service BookService {
   rpc CreateBook(CreateBookRequest) returns (CreateBookResponse) {};

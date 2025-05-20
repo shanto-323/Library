@@ -3,8 +3,6 @@ package books
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"time"
 
 	"github.com/shanto-323/Library/books/pb"
 	"google.golang.org/grpc"
@@ -41,27 +39,7 @@ func (c *Client) CreateBook(ctx context.Context, title string, isbn string, writ
 		},
 	)
 	if err != nil {
-		SlogLogger(
-			LogType{
-				L: slog.LevelError,
-				M: "Client",
-				E: err,
-				D: "Create book",
-			},
-		)
 		return nil, err
-	}
-	c_at, _ := time.Parse(time.RFC3339, book.Book.CratedAt)
-	u_at, err := time.Parse(time.RFC3339, book.Book.UpdatedAt)
-	if err != nil {
-		SlogLogger(
-			LogType{
-				L: slog.LevelError,
-				M: "Client",
-				E: fmt.Errorf("time persing error %s", err),
-				D: "Create book",
-			},
-		)
 	}
 
 	return &Book{
@@ -70,12 +48,12 @@ func (c *Client) CreateBook(ctx context.Context, title string, isbn string, writ
 		Writer:      book.Book.Writer,
 		TotalCopies: book.Book.TotalCopies,
 		OnLoan:      book.Book.OnLoan,
-		CreatedAt:   c_at,
-		UpdatedAt:   u_at,
+		CreatedAt:   book.Book.CreatedAt.AsTime(),
+		UpdatedAt:   book.Book.UpdatedAt.AsTime(),
 	}, nil
 }
 
-func (c *Client) UpdateBook(ctx context.Context, book Book) error {
+func (c *Client) UpdateBook(ctx context.Context, book *Book) (*string, error) {
 	resp, err := c.service.UpdateBook(
 		ctx,
 		&pb.UpdateBookRequest{
@@ -90,37 +68,22 @@ func (c *Client) UpdateBook(ctx context.Context, book Book) error {
 	)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
-	SlogLogger(
-		LogType{
-			L: slog.LevelInfo,
-			M: "Client",
-			D: resp.Msg,
-		},
-	)
-	return nil
+	return &resp.Msg, nil
 }
 
-func (c *Client) DeleteBook(ctx context.Context, isbn string) error {
+func (c *Client) DeleteBook(ctx context.Context, isbn string) (*string, error) {
 	resp, err := c.service.DeleteBook(
 		ctx,
 		&pb.DeleteBookRequest{
 			Isbn: isbn,
 		},
 	)
-
 	if err != nil {
-		return err
+		return nil, err
 	}
-	SlogLogger(
-		LogType{
-			L: slog.LevelInfo,
-			M: "Client",
-			D: resp.Msg,
-		},
-	)
-	return nil
+	return &resp.Msg, nil
 }
 
 func (c *Client) GetBook(ctx context.Context, isbn string) (*Book, error) {
@@ -129,31 +92,18 @@ func (c *Client) GetBook(ctx context.Context, isbn string) (*Book, error) {
 		return nil, err
 	}
 
-	c_at, _ := time.Parse(time.RFC3339, book.Book.CratedAt)
-	u_at, err := time.Parse(time.RFC3339, book.Book.UpdatedAt)
-	if err != nil {
-		SlogLogger(
-			LogType{
-				L: slog.LevelError,
-				M: "Client",
-				E: fmt.Errorf("time persing error %s", err),
-				D: "Create book",
-			},
-		)
-	}
-
 	return &Book{
 		Title:       book.Book.Title,
 		ISBN:        book.Book.Isbn,
 		Writer:      book.Book.Writer,
 		TotalCopies: book.Book.TotalCopies,
 		OnLoan:      book.Book.OnLoan,
-		CreatedAt:   c_at,
-		UpdatedAt:   u_at,
+		CreatedAt:   book.Book.CreatedAt.AsTime(),
+		UpdatedAt:   book.Book.UpdatedAt.AsTime(),
 	}, nil
 }
 
-func (c *Client) GetAllBook(ctx context.Context, limit uint64, offset uint64) ([]Book, error) {
+func (c *Client) GetAllBook(ctx context.Context, limit int64, offset int64) (*BookList, error) {
 	resp, err := c.service.GetAllBook(
 		ctx,
 		&pb.GetAllBookRequest{
@@ -167,34 +117,26 @@ func (c *Client) GetAllBook(ctx context.Context, limit uint64, offset uint64) ([
 	}
 
 	books := []Book{}
-	for _, b := range resp.Book {
-		c_at, _ := time.Parse(time.RFC3339, b.CratedAt)
-		u_at, err := time.Parse(time.RFC3339, b.UpdatedAt)
-		if err != nil {
-			SlogLogger(
-				LogType{
-					L: slog.LevelError,
-					M: "Client",
-					E: fmt.Errorf("time persing error %s", err),
-					D: "Get All Books",
-				},
-			)
-		}
+	for _, b := range resp.Books {
 		book := Book{
 			Title:       b.Title,
 			ISBN:        b.Isbn,
 			Writer:      b.Writer,
 			TotalCopies: b.TotalCopies,
 			OnLoan:      b.OnLoan,
-			CreatedAt:   c_at,
-			UpdatedAt:   u_at,
+			CreatedAt:   b.CreatedAt.AsTime(),
+			UpdatedAt:   b.UpdatedAt.AsTime(),
 		}
 		books = append(books, book)
 	}
 
-	return books, nil
+	return &BookList{
+		TotalPage:  int(resp.TotalPages),
+		TotalBooks: int(resp.TotalBooks),
+		Books:      books,
+	}, nil
 }
-func (c *Client) SearchBook(ctx context.Context, query string, limit uint64, offset uint64) ([]Book, error) {
+func (c *Client) SearchBook(ctx context.Context, query string, limit int64, offset int64) (*BookList, error) {
 	resp, err := c.service.SearchBook(
 		ctx,
 		&pb.SearchBookRequest{
@@ -209,30 +151,22 @@ func (c *Client) SearchBook(ctx context.Context, query string, limit uint64, off
 	}
 
 	books := []Book{}
-	for _, b := range resp.Book {
-		c_at, _ := time.Parse(time.RFC3339, b.CratedAt)
-		u_at, err := time.Parse(time.RFC3339, b.UpdatedAt)
-		if err != nil {
-			SlogLogger(
-				LogType{
-					L: slog.LevelError,
-					M: "Client",
-					E: fmt.Errorf("time persing error %s", err),
-					D: "Get All Books",
-				},
-			)
-		}
+	for _, b := range resp.Books {
 		book := Book{
 			Title:       b.Title,
 			ISBN:        b.Isbn,
 			Writer:      b.Writer,
 			TotalCopies: b.TotalCopies,
 			OnLoan:      b.OnLoan,
-			CreatedAt:   c_at,
-			UpdatedAt:   u_at,
+			CreatedAt:   b.CreatedAt.AsTime(),
+			UpdatedAt:   b.UpdatedAt.AsTime(),
 		}
 		books = append(books, book)
 	}
 
-	return books, nil
+	return &BookList{
+		TotalPage:  int(resp.TotalPages),
+		TotalBooks: int(resp.TotalBooks),
+		Books:      books,
+	}, nil
 }

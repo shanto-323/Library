@@ -11,3 +11,9 @@ type Book struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
+
+type BookList struct {
+	TotalPage  int    `json:"total_page"`
+	TotalBooks int    `json:"total_book"`
+	Books      []Book `json:"books"`
+}

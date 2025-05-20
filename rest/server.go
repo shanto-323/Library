@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -138,12 +139,13 @@ func (s *Server) UpdateBookHandler(w http.ResponseWriter, r *http.Request) error
 		return fmt.Errorf("missing ISBN in URL")
 	}
 
-	err := s.bookClient.UpdateBook(ctx, *book)
+	msg, err := s.bookClient.UpdateBook(ctx, book)
 	if err != nil {
 		return err
 	}
 
-	return WriteJson(w, "Book Updated Successfully")
+	books.LogInfo(slog.LevelInfo, "MAIN SERVER", book)
+	return WriteJson(w, &msg)
 }
 
 func (s *Server) DeleteBookHandler(w http.ResponseWriter, r *http.Request) error {
@@ -159,12 +161,12 @@ func (s *Server) DeleteBookHandler(w http.ResponseWriter, r *http.Request) error
 		return fmt.Errorf("missing ISBN in URL")
 	}
 
-	err := s.bookClient.DeleteBook(ctx, isbn)
+	msg, err := s.bookClient.DeleteBook(ctx, isbn)
 	if err != nil {
 		return err
 	}
 
-	return WriteJson(w, "Book Deleted Successfully")
+	return WriteJson(w, &msg)
 }
 
 func (s *Server) GetBookHandler(w http.ResponseWriter, r *http.Request) error {
@@ -198,8 +200,14 @@ func (s *Server) GetAllBooksHandler(w http.ResponseWriter, r *http.Request) erro
 		return fmt.Errorf("invalid mathod")
 	}
 
-	limit := perseUint("limit", 10, r)
-	offset := perseUint("offset", 0, r)
+	limit, err := perseInt("limit", r)
+	if err != nil {
+		return err
+	}
+	offset, err := perseInt("offset", r)
+	if err != nil {
+		return err
+	}
 
 	books, err := s.bookClient.GetAllBook(ctx, limit, offset)
 	if err != nil {
@@ -217,8 +225,14 @@ func (s *Server) SearchBookHandler(w http.ResponseWriter, r *http.Request) error
 		return fmt.Errorf("invalid mathod")
 	}
 
-	limit := perseUint("limit", 10, r)
-	offset := perseUint("offset", 0, r)
+	limit, err := perseInt("limit", r)
+	if err != nil {
+		return err
+	}
+	offset, err := perseInt("offset", r)
+	if err != nil {
+		return err
+	}
 	query := r.URL.Query().Get("query")
 	if query == "" {
 		return nil
@@ -247,15 +261,15 @@ func WriteJson(w http.ResponseWriter, msg any) error {
 	return json.NewEncoder(w).Encode(msg)
 }
 
-func perseUint(v string, base uint64, r *http.Request) uint64 {
+func perseInt(v string, r *http.Request) (int64, error) {
 	qv := r.URL.Query().Get(v)
 	if qv == "" {
-		return base
+		return 0, nil
+	}
+	num, err := strconv.ParseInt(qv, 10, 64)
+	if err != nil {
+		return 0, nil
 	}
 
-	value, err := strconv.ParseUint(qv, 10, 64)
-	if err != nil {
-		return base
-	}
-	return value
+	return num, nil
 }
