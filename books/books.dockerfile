@@ -2,7 +2,6 @@ FROM golang:1.23-alpine3.20 AS build
 RUN apk --no-cache add gcc g++ make ca-certificates
 WORKDIR /app
 COPY go.mod go.sum ./
-COPY vendor vendor
 COPY books books
 RUN go build -o app ./books/cmd
 

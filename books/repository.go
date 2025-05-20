@@ -16,8 +16,8 @@ type Repository interface {
 	DeleteBook(ctx context.Context, isbn string) error
 
 	GetBookByISBN(ctx context.Context, isbn string) (*Book, error)
-	GetBooks(ctx context.Context, limit uint64, offset uint64) ([]Book, error)
-	SearchBook(ctx context.Context, query string, limit uint64, offset uint64) ([]Book, error)
+	GetBooks(ctx context.Context, limit int, offset int) (*BookList, error)
+	SearchBook(ctx context.Context, query string, limit int, offset int) (*BookList, error)
 }
 
 type wrapper struct {
@@ -69,31 +69,13 @@ func (r *booksRepository) CreateBook(ctx context.Context, book Book) error {
 }
 
 func (r *booksRepository) UpdateBook(ctx context.Context, book Book) error {
-	body := map[string]interface{}{
-		"doc": map[string]interface{}{
-			"title":        book.Title,
-			"isbn":         book.ISBN,
-			"writer":       book.Writer,
-			"total_copies": book.TotalCopies,
-			"on_loan":      book.OnLoan,
-			"updated_at":   book.UpdatedAt,
-		},
-	}
-
-	var buf bytes.Buffer
-	err := json.NewEncoder(&buf).Encode(body)
+	err := r.DeleteBook(ctx, book.ISBN)
 	if err != nil {
-		LogError(slog.LevelError, "Database", err, "Update Book Error")
 		return err
 	}
-	_, err = r.client.Update(
-		"books",
-		book.ISBN,
-		&buf,
-		r.client.Update.WithContext(ctx),
-	)
+
+	err = r.CreateBook(ctx, book)
 	if err != nil {
-		LogError(slog.LevelError, "Database", err, "Update Book Error")
 		return err
 	}
 	LogInfo(slog.LevelInfo, "Database", "Book Updated")
@@ -141,7 +123,7 @@ func (r *booksRepository) GetBookByISBN(ctx context.Context, isbn string) (*Book
 	return &wr.Source, nil
 }
 
-func (r *booksRepository) GetBooks(ctx context.Context, limit uint64, offset uint64) ([]Book, error) {
+func (r *booksRepository) GetBooks(ctx context.Context, limit int, offset int) (*BookList, error) {
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"match_all": map[string]interface{}{},
@@ -174,6 +156,9 @@ func (r *booksRepository) GetBooks(ctx context.Context, limit uint64, offset uin
 
 	var esRes struct {
 		Hits struct {
+			Total struct {
+				Value int `json:"value"` // Total number of hits
+			} `json:"total"`
 			Hits []struct {
 				Source Book `json:"_source"`
 			} `json:"hits"`
@@ -189,11 +174,28 @@ func (r *booksRepository) GetBooks(ctx context.Context, limit uint64, offset uin
 	for _, v := range esRes.Hits.Hits {
 		books = append(books, v.Source)
 	}
+
+	totalBook := esRes.Hits.Total.Value
+	totalPage := totalBook / limit
+	if totalBook%limit != 0 {
+		totalPage++
+	}
+
 	LogInfo(slog.LevelInfo, "Database", "Got All Books")
-	return books, nil
+	LogInfo(slog.LevelInfo, "Database", BookList{
+		TotalPage:  totalPage,
+		TotalBooks: totalBook,
+		Books:      books,
+	})
+
+	return &BookList{
+		TotalPage:  totalPage,
+		TotalBooks: totalBook,
+		Books:      books,
+	}, nil
 }
 
-func (r *booksRepository) SearchBook(ctx context.Context, query string, limit uint64, offset uint64) ([]Book, error) {
+func (r *booksRepository) SearchBook(ctx context.Context, query string, limit int, offset int) (*BookList, error) {
 	q := map[string]interface{}{
 		"query": map[string]interface{}{
 			"match": map[string]interface{}{
@@ -235,6 +237,9 @@ func (r *booksRepository) SearchBook(ctx context.Context, query string, limit ui
 
 	var esRes struct {
 		Hits struct {
+			Total struct {
+				Value int `json:"value"` // total number of hits
+			} `json:"total"`
 			Hits []struct {
 				Source Book `json:"_source"`
 			} `json:"hits"`
@@ -251,7 +256,17 @@ func (r *booksRepository) SearchBook(ctx context.Context, query string, limit ui
 	for _, v := range esRes.Hits.Hits {
 		books = append(books, v.Source)
 	}
+
+	totalBook := esRes.Hits.Total.Value
+	totalPage := totalBook / limit
+	if totalBook%limit != 0 {
+		totalPage++
+	}
+
 	LogInfo(slog.LevelInfo, "Database", fmt.Sprintf("Got All Books By Query=%s", query))
-	LogInfo(slog.LevelInfo, "Database", books)
-	return books, nil
+	return &BookList{
+		TotalPage:  totalPage,
+		TotalBooks: totalBook,
+		Books:      books,
+	}, nil
 }
