@@ -5,7 +5,7 @@ import "time"
 type UserModel struct {
 	ID           string    `gorm:"primarykey" json:"id"`
 	Name         string    `json:"name"`
-	Password     string    `json:"_"`
+	Password     string    `json:"password"`
 	Email        string    `gorm:"uniqueIndex" json:"email"`
 	Phone        string    `json:"phone"` // must for admin
 	UserType     string    `json:"user_type"`

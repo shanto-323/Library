@@ -1,7 +1,6 @@
 package userservice
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -42,31 +41,4 @@ func CreateTokens(email string, user_id string, user_type string) (string, strin
 		return "", "", err
 	}
 	return token, r_token, nil
-}
-
-func ValidateToken(signedToken string) (*SignInDetails, error) {
-	token, err := jwt.ParseWithClaims(
-		signedToken,
-		&SignInDetails{},
-		func(t *jwt.Token) (interface{}, error) {
-			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("token encryption method not matching")
-			}
-			return []byte(SECRET_KEY), nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	claims, ok := token.Claims.(*SignInDetails)
-	if !ok || !token.Valid {
-		return nil, fmt.Errorf("token is not valid")
-	}
-
-	if claims.ExpiresAt < time.Now().Unix() {
-		return nil, fmt.Errorf("token is not valid")
-	}
-	return claims, nil
 }

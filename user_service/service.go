@@ -120,15 +120,10 @@ func (s userService) DeleteUserById(ctx context.Context, uid string) error {
 }
 
 func (s userService) NewToken(ctx context.Context, id string, r_token string) (string, error) {
-	_, err := ValidateToken(r_token)
-	if err != nil {
-		books.LogError(slog.LevelError, "SERVICE", err, "token expired")
-		return "", err
-	}
-
 	user, _ := s.userRepository.GetUserById(ctx, id)
+
 	if user.RefreshToken == "" || user.RefreshToken != r_token {
-		books.LogError(slog.LevelError, "SERVICE", err, fmt.Sprintf("token nil %s or token not matched", r_token))
+		books.LogError(slog.LevelError, "SERVICE", fmt.Errorf("token nil %s or token not matched", r_token), fmt.Sprintf("token nil %s or token not matched", r_token))
 		return "", fmt.Errorf("token nil %s or token not matched", r_token)
 	}
 

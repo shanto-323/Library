@@ -1,4 +1,4 @@
-# Library API v1.0.0
+# Library API v2.0.0
 ### A self-hosted book management service with Elasticsearch backend
 
 ## Requirements
