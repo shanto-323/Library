@@ -2,7 +2,9 @@ package userservice
 
 import (
 	"context"
+	"log/slog"
 
+	"github.com/shanto-323/Library/books"
 	"github.com/shanto-323/Library/user_service/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -179,6 +181,7 @@ func (c *Client) GetUsers(ctx context.Context, limit int64, offset int64) (*User
 }
 
 func (c *Client) GetAccessToken(ctx context.Context, id string, r_token string) (*string, error) {
+	books.LogInfo(slog.LevelInfo, "client", id)
 	resp, err := c.service.GetAccessToken(ctx, &pb.NewAccessTokenRequest{
 		Id:           id,
 		RefreshToken: r_token,

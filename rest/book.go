@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -183,17 +182,4 @@ func (s *Server) SearchBookHandler(w http.ResponseWriter, r *http.Request) error
 		return err
 	}
 	return WriteJson(w, http.StatusOK, books)
-}
-
-func perseInt(v string, r *http.Request) (int64, error) {
-	qv := r.URL.Query().Get(v)
-	if qv == "" {
-		return 0, nil
-	}
-	num, err := strconv.ParseInt(qv, 10, 64)
-	if err != nil {
-		return 0, nil
-	}
-
-	return num, nil
 }

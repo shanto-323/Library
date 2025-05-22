@@ -1,12 +1,11 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"time"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/shanto-323/Library/books"
@@ -43,126 +42,39 @@ func (s *Server) Start() error {
 	r := mux.NewRouter()
 	router := r.PathPrefix("/library/v2").Subrouter()
 
-	//books
+	// books
 	bookRouter := router.PathPrefix("/books").Subrouter()
 	bookRouter.Use(JwtMiddleWere)
 
 	bookRouter.HandleFunc("/search", createHandlerFunc(s.SearchBookHandler)).Methods("GET")
-	bookRouter.HandleFunc("", createHandlerFunc(s.CreateBookHandler)).Methods("POST")
-	bookRouter.HandleFunc("/{isbn}", createHandlerFunc(s.UpdateBookHandler)).Methods("PATCH")
-	bookRouter.HandleFunc("/{isbn}", createHandlerFunc(s.DeleteBookHandler)).Methods("DELETE")
 	bookRouter.HandleFunc("/{isbn}", createHandlerFunc(s.GetBookHandler)).Methods("GET")
 	bookRouter.HandleFunc("", createHandlerFunc(s.GetAllBooksHandler)).Methods("GET")
 
-	//user
+	bookAdminRouter := bookRouter.PathPrefix("/admin").Subrouter()
+	bookAdminRouter.Use(JwtMiddleWere)
+	bookAdminRouter.HandleFunc("", createHandlerFunc(s.CreateBookHandler)).Methods("POST")
+	bookAdminRouter.HandleFunc("/{isbn}", createHandlerFunc(s.UpdateBookHandler)).Methods("PATCH")
+	bookAdminRouter.HandleFunc("/{isbn}", createHandlerFunc(s.DeleteBookHandler)).Methods("DELETE")
+
+	// user
 	userServiceRouter := router.PathPrefix("/user").Subrouter()
 	userServiceRouter.HandleFunc("/signup", createHandlerFunc(s.SignUpHandler)).Methods("POST")
-	userServiceRouter.HandleFunc("/login", createHandlerFunc(s.SignInHandler)).Methods("GET")
-	userServiceRouter.HandleFunc("/logout/{id}", createHandlerFunc(s.SignOutHandler)).Methods("POST")
-	userServiceRouter.HandleFunc("/token", createHandlerFunc(s.NewRefreshTokenHandler)).Methods("POST")
+	userServiceRouter.HandleFunc("/login", createHandlerFunc(s.SignInHandler)).Methods("POST")
+	userServiceRouter.HandleFunc("/token/{id}", createHandlerFunc(s.NewRefreshTokenHandler)).Methods("POST")
+
+	authUserServiceRouter := router.PathPrefix("").Subrouter()
+	authUserServiceRouter.Use(JwtMiddleWere)
+	authUserServiceRouter.HandleFunc("/logout/{id}", createHandlerFunc(s.SignOutHandler)).Methods("POST")
+	authUserServiceRouter.HandleFunc("/{id}", createHandlerFunc(s.UpdateUserHandler)).Methods("PATCH")
+	authUserServiceRouter.HandleFunc("delete/{id}", createHandlerFunc(s.DeleteUserHandler)).Methods("POST")
+
+	// user -ADMIN Gateway
+	protectedUserServiceRouter := userServiceRouter.PathPrefix("/admin").Subrouter()
+	protectedUserServiceRouter.Use(JwtMiddleWere)
+	protectedUserServiceRouter.HandleFunc("/all", createHandlerFunc(s.GetALlUserHandler)).Methods("GET")
 
 	fmt.Println("Api running.. ")
 	return http.ListenAndServe(s.IpAddr, r)
-}
-
-func (s *Server) SignUpHandler(w http.ResponseWriter, r *http.Request) error {
-	ctx := r.Context()
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	if r.Method != http.MethodPost {
-		return fmt.Errorf("invalid mathod")
-	}
-
-	if r.Body == nil {
-		return fmt.Errorf("request is null")
-	}
-	defer r.Body.Close()
-
-	user := &userservice.UserModel{}
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		return err
-	}
-
-	resp, err := s.userServiceClient.SignUp(ctx, user.Name, user.Password, user.Email, user.Phone, user.UserType)
-	if err != nil {
-		return err
-	}
-
-	return WriteJson(w, http.StatusOK, resp)
-}
-
-func (s *Server) SignInHandler(w http.ResponseWriter, r *http.Request) error {
-	ctx := r.Context()
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	if r.Method != http.MethodGet {
-		return fmt.Errorf("invalid mathod")
-	}
-
-	if r.Body == nil {
-		return fmt.Errorf("request is null")
-	}
-	defer r.Body.Close()
-
-	user := &userservice.UserModel{}
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		return err
-	}
-
-	if user.Email == "" || user.Password == "" {
-		return fmt.Errorf("empty field")
-	}
-
-	resp, err := s.userServiceClient.SignIn(ctx, user.Email, user.Password)
-	if err != nil {
-		return err
-	}
-
-	return WriteJson(w, http.StatusOK, resp)
-}
-
-func (s *Server) SignOutHandler(w http.ResponseWriter, r *http.Request) error {
-	ctx := r.Context()
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	if r.Method != http.MethodPost {
-		return fmt.Errorf("invalid mathod")
-	}
-	id := mux.Vars(r)["id"]
-
-	resp, err := s.userServiceClient.Logout(ctx, id)
-	if err != nil {
-		return err
-	}
-	return WriteJson(w, http.StatusOK, resp)
-}
-
-func (s *Server) NewRefreshTokenHandler(w http.ResponseWriter, r *http.Request) error {
-	ctx := r.Context()
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	if r.Method != http.MethodGet {
-		return fmt.Errorf("invalid mathod")
-	}
-	r_token := r.Header.Get("x-jwt-token")
-	if r_token == "" {
-		return fmt.Errorf("nil token")
-	}
-
-	claims, err := ValidateToken(r_token)
-	if err != nil {
-		return err
-	}
-
-	newToken, err := s.userServiceClient.GetAccessToken(ctx, claims.User_id, r_token)
-	if err != nil {
-		return err
-	}
-	return WriteJson(w, http.StatusOK, newToken)
 }
 
 type GetHandlerFunc func(w http.ResponseWriter, r *http.Request) error
@@ -170,7 +82,7 @@ type GetHandlerFunc func(w http.ResponseWriter, r *http.Request) error
 func createHandlerFunc(f GetHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := f(w, r); err != nil {
-			log.Println("Handler error", err)
+			WriteJson(w, http.StatusBadRequest, err)
 			return
 		}
 	}
@@ -179,4 +91,17 @@ func createHandlerFunc(f GetHandlerFunc) http.HandlerFunc {
 func WriteJson(w http.ResponseWriter, status int, msg any) error {
 	w.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(msg)
+}
+
+func perseInt(v string, r *http.Request) (int64, error) {
+	qv := r.URL.Query().Get(v)
+	if qv == "" {
+		return 0, nil
+	}
+	num, err := strconv.ParseInt(qv, 10, 64)
+	if err != nil {
+		return 0, nil
+	}
+
+	return num, nil
 }

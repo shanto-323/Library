@@ -2,8 +2,10 @@ package userservice
 
 import (
 	"context"
+	"log/slog"
 	"net"
 
+	"github.com/shanto-323/Library/books"
 	"github.com/shanto-323/Library/user_service/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -159,6 +161,7 @@ func (sr *grpcServer) GetUsers(ctx context.Context, r *pb.GetAllUserRequest) (*p
 }
 
 func (sr *grpcServer) GetAccessToken(ctx context.Context, r *pb.NewAccessTokenRequest) (*pb.NewAccessTokenResponse, error) {
+	books.LogInfo(slog.LevelInfo, "client", r.Id)
 	token, err := sr.service.NewToken(ctx, r.Id, r.RefreshToken)
 	if err != nil {
 		return nil, err

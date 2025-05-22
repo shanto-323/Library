@@ -22,23 +22,31 @@ func CreateTokens(email string, user_id string, user_type string) (string, strin
 		User_id:   user_id,
 		User_type: user_type,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
+			ExpiresAt: time.Now().Add(20 * time.Minute).Unix(),
 		},
 	}
 
 	r_claims := &SignInDetails{
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
+			ExpiresAt: time.Now().Add(7 * 24 * time.Hour).Unix(),
 		},
 	}
 
-	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(SECRET_KEY)
+	token, err := makeToken(claims)
 	if err != nil {
 		return "", "", err
 	}
-	r_token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, r_claims).SignedString(SECRET_KEY)
+	r_token, err := makeToken(r_claims)
 	if err != nil {
 		return "", "", err
 	}
 	return token, r_token, nil
+}
+
+func makeToken(claims *SignInDetails) (string, error) {
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(SECRET_KEY)
+	if err != nil {
+		return "", err
+	}
+	return token, nil
 }

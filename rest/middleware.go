@@ -20,17 +20,23 @@ type SignInDetails struct {
 
 type contextKey string
 
-const userTypeKey = contextKey("user_type")
+const (
+	userTypeKey = contextKey("user_type")
+	tName       = "access_token"
+)
 
 func JwtMiddleWere(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r_token := r.Header.Get("token")
-		if r_token == "" {
+		accessToken, err := r.Cookie(tName)
+		if err != nil {
+			return
+		}
+		if accessToken.Value == "" {
 			WriteJson(w, http.StatusNotAcceptable, "nil token")
 			return
 		}
 
-		claims, err := ValidateToken(r_token)
+		claims, err := ValidateToken(accessToken.Value)
 		if err != nil {
 			if ve, ok := err.(*jwt.ValidationError); ok {
 				if ve.Errors&jwt.ValidationErrorExpired != 0 {
@@ -58,7 +64,6 @@ func ValidateToken(signedToken string) (*SignInDetails, error) {
 			return []byte(SECRET_KEY), nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

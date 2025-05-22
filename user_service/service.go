@@ -106,7 +106,21 @@ func (s userService) GetUserByEmail(ctx context.Context, email string) (*UserMod
 }
 
 func (s userService) UpdateUser(ctx context.Context, user *UserModel) (*UserModel, error) {
-	err := s.userRepository.UpdateUser(ctx, user)
+	dbUser, err := s.GetUserById(ctx, user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if dbUser == nil {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	dbUser, err = mutationHelper(dbUser, user)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.userRepository.UpdateUser(ctx, dbUser)
 	if err != nil {
 		books.LogError(slog.LevelError, "SERVICE", err, "error updating user")
 		return nil, err
@@ -120,7 +134,15 @@ func (s userService) DeleteUserById(ctx context.Context, uid string) error {
 }
 
 func (s userService) NewToken(ctx context.Context, id string, r_token string) (string, error) {
-	user, _ := s.userRepository.GetUserById(ctx, id)
+	books.LogInfo(slog.LevelInfo, "client", id)
+	user, err := s.userRepository.GetUserById(ctx, id)
+	if err != nil {
+		return "", err
+	}
+
+	if user == nil {
+		return "", fmt.Errorf("no user found")
+	}
 
 	if user.RefreshToken == "" || user.RefreshToken != r_token {
 		books.LogError(slog.LevelError, "SERVICE", fmt.Errorf("token nil %s or token not matched", r_token), fmt.Sprintf("token nil %s or token not matched", r_token))
@@ -144,4 +166,25 @@ func (s userService) GetAllUser(ctx context.Context, limit int64, offset int64) 
 		offset = 0
 	}
 	return s.userRepository.GetUsers(ctx, int(limit), int(offset))
+}
+
+func mutationHelper(dbUser *UserModel, user *UserModel) (*UserModel, error) {
+	hasChange := false
+	if dbUser.Name != user.Name {
+		dbUser.Name = user.Name
+		hasChange = true
+	}
+	if dbUser.Password != user.Password {
+		dbUser.Password = user.Password
+		hasChange = true
+	}
+	if dbUser.Phone != user.Phone {
+		dbUser.Phone = user.Phone
+		hasChange = true
+	}
+
+	if !hasChange {
+		return nil, fmt.Errorf("value not changed")
+	}
+	return dbUser, nil
 }
