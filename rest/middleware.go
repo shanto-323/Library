@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/shanto-323/Library/books"
 )
 
 var SECRET_KEY = []byte("SET_YOUR_JWT_KEY")
@@ -41,6 +43,7 @@ func JwtMiddleWere(next http.Handler) http.Handler {
 			if ve, ok := err.(*jwt.ValidationError); ok {
 				if ve.Errors&jwt.ValidationErrorExpired != 0 {
 					WriteJson(w, http.StatusUnauthorized, "token expired")
+					books.LogInfo(slog.LevelInfo, "MIDDLEWERE", "token")
 					return
 				}
 			}

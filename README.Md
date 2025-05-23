@@ -1,9 +1,29 @@
 # Library API v2.0.0
-### A self-hosted book management service with Elasticsearch backend
+### This is a self-hosted backend service for managing a digital library, designed with scalability and security in mind. It supports user-based operations, full-text book search, and robust access control using JWT authentication.
 
 ## Requirements
 -  ``go``  
 -  ``docker`` 
+
+## Version
+-  `` 1.0.0 ``  Basic CRUD operations • Pagination (limit/offset) • Docker support. ✅ Released
+-  `` 2.0.0 ``  JWT authentication • Role-based access • Secure password hashing. ✅ Released
+-  `` 3.0.0 ``  Redis rate limiting • Response caching. Planned
+
+### Features
+
+-  **JWT Authentication** with access & refresh tokens
+-  **Full-text Search** powered by Elasticsearch
+-  **Relational Data Storage** using PostgreSQL
+-  **Password Hashing** with bcrypt for secure credentials
+-  **Role-based Access** (ADMIN/USER)
+
+### Tech Used
+- **Go (Golang)** – Backend server
+- **PostgreSQL** – Primary database
+- **Elasticsearch** – Search engine
+- **bcrypt** – Secure password hashing
+- **JWT** – Auth tokens for session management
 
 ## Run Locally
 
@@ -28,104 +48,40 @@ Start the server
 
 ## API Reference
 
-### Create Book
-```http
-  POST library/v1/books
-```
 
-```bash
-  curl -X POST \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "The Go Programming Language",
-    "isbn": "978-0134190440",
-    "writer": "Alan A. A. Donovan & Brian W. Kernighan",
-    "total_copies": 19,
-    "on_loan": 3
-  }' \
-  "localhost:8080/library/v1/books"
-```
+### Overview
+- All routes are under the base path `/library/v2`.
+- JWT authentication is required for protected routes.
+- Role-based access control: 'USER' and 'ADMIN'.
+- Access tokens are **Short-Lived(20 munite)** and provided via cookie.
+- Refresh tokens are stored securely in the database.
+- All passwords are hashed using bcrypt before being stored.
+- Refresh token support is available via `/user/token/{id}`.
+- No CORS support
+<br><br><br>
 
-#### Book Object Structure
+### User Endpoints
 
-| Field          | Type     | Required | Description                          | Example Value                                 |
-|----------------|----------|----------|--------------------------------------|-----------------------------------------------|
-| `title`        | `string` | Yes      | Title of the book                    | `"The Go Programming Language"`               |
-| `isbn`         | `string` | Yes      | 10/13-digit ISBN                     | `"978-0134190440"`                            |
-| `writer`       | `string` | Yes      | Author(s)                            | `"Alan A. A. Donovan & Brian W. Kernighan"`   |
-| `total_copies` | `integer`| Yes      | Total inventory count (≥0)           | `19`                                          |
-| `on_loan`      | `integer`| Yes      | Currently borrowed copies (≤total)   | `3`                                           |
-| `created_at`   | `string` | Auto     | ISO-8601 creation timestamp          | `"2025-05-18T18:19:27Z"`                      |
-| `updated_at`   | `string` | Auto     | ISO-8601 last update timestamp       | `"2025-05-20T09:15:42Z"`                      |
+| Method | Endpoint                   | Description                       | Auth Required | User Type |
+|--------|----------------------------|-----------------------------------|----------------|------------|
+| POST   | `/user/signup`             | Register a new user               | No             | -          |
+| POST   | `/user/login`              | Log in with email and password    | No             | -          |
+| GET    | `/user/token/{id}`         | Get a new access token using refresh token (include header `x-jwt-token`)           | No             | -          |
+| POST   | `/user/logout/{id}`        | Log out and invalidate tokens     | Yes            | USER/ADMIN |
+| PATCH  | `/user/{id}`               | Update user info                  | Yes            | USER/ADMIN |
+| DELETE | `/user/delete/{id}`        | Delete user account               | Yes            | USER/ADMIN |
+| GET    | `/user/admin/all`          | Get all users (admin only)        | Yes            | ADMIN      |
+---
 
-### Delete Book By ISBN
-```http
-  DELETE library/v1/books/{isbn}
-```
+### Book Endpoints
 
-| UrlParam     | Type     | Description |
-| :----------  | :------  | :---------- |  
-| `bookIsbn`   | `string` | book isbn number |
+| Method | Endpoint                   | Description                       | Auth Required | User Type |
+|--------|----------------------------|-----------------------------------|----------------|------------|
+| GET    | `/books/search?query=...`  | Search for books                  | Yes            | USER/ADMIN |
+| GET    | `/books/{isbn}`            | Get book by ISBN                  | Yes            | USER/ADMIN |
+| GET    | `/books`                   | Get all books                     | Yes            | USER/ADMIN |
+| POST   | `/books/admin`             | Add a new book                    | Yes            | ADMIN      |
+| PATCH  | `/books/admin/{isbn}`      | Update book information           | Yes            | ADMIN      |
+| DELETE | `/books/admin/{isbn}`      | Delete a book                     | Yes            | ADMIN      |
 
-```bash
-  curl -X DELETE "localhost:8080/library/v1/books/978-0134190440"
-```
-
-### Update Book By ISBN
-```http
-  PATCH library/v1/books/{isbn}
-```
-
-| UrlParam     | Type     | Description |
-| :----------  | :------  | :---------- |  
-| `bookIsbn`   | `string` | book isbn number |
-
-```bash
-  curl -X PATCH "localhost:8080/library/v1/books/978-0134190440"
-```
-
-### Get Book By ISBN
-```http
-  GET library/v1/books/{isbn}
-```
-
-| UrlParam     | Type     | Description |
-| :----------  | :------  | :---------- |  
-| `bookIsbn`   | `string` | book isbn number |
-
-```bash
-  curl -X GET "localhost:8080/library/v1/books/978-0134190440"
-```
-
-### Get all Books
-```http
-  GET library/v1/books
-```
-
-| Query     | Type     | Description |
-| :-------  | :------  | :---------- |  
-| `limit`   | `uint64` | per page item |
-| `offset`  | `uint64` | starting index |
-
-```bash
-  curl -X GET "localhost:8080/library/v1/books?limit=10&offfset=0"
-```
-
-### Search Books
-```http
-  GET library/v1/books/search
-```
-
-| Query     | Type     | Description |
-| :-------  | :------  | :---------- |  
-| `query`   | `string` | search item |
-| `limit`   | `uint64` | per page item |
-| `offset`  | `uint64` | starting index |
-
-```bash
-  curl -X GET "localhost:8080/library/v1/books/search?query=Go&limit=100&offfset=0"
-```
-
-
-
-
+---
