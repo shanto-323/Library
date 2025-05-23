@@ -60,13 +60,13 @@ func (s *Server) Start() error {
 	userServiceRouter := router.PathPrefix("/user").Subrouter()
 	userServiceRouter.HandleFunc("/signup", createHandlerFunc(s.SignUpHandler)).Methods("POST")
 	userServiceRouter.HandleFunc("/login", createHandlerFunc(s.SignInHandler)).Methods("POST")
-	userServiceRouter.HandleFunc("/token/{id}", createHandlerFunc(s.NewRefreshTokenHandler)).Methods("POST")
+	userServiceRouter.HandleFunc("/token/{id}", createHandlerFunc(s.NewRefreshTokenHandler)).Methods("GET")
 
-	authUserServiceRouter := router.PathPrefix("").Subrouter()
+	authUserServiceRouter := userServiceRouter.PathPrefix("").Subrouter()
 	authUserServiceRouter.Use(JwtMiddleWere)
 	authUserServiceRouter.HandleFunc("/logout/{id}", createHandlerFunc(s.SignOutHandler)).Methods("POST")
 	authUserServiceRouter.HandleFunc("/{id}", createHandlerFunc(s.UpdateUserHandler)).Methods("PATCH")
-	authUserServiceRouter.HandleFunc("delete/{id}", createHandlerFunc(s.DeleteUserHandler)).Methods("POST")
+	authUserServiceRouter.HandleFunc("/delete/{id}", createHandlerFunc(s.DeleteUserHandler)).Methods("DELETE")
 
 	// user -ADMIN Gateway
 	protectedUserServiceRouter := userServiceRouter.PathPrefix("/admin").Subrouter()

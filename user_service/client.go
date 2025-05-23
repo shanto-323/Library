@@ -41,7 +41,6 @@ func (c *Client) SignUp(ctx context.Context, name string, password string, email
 			},
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +68,6 @@ func (c *Client) SignIn(ctx context.Context, email string, password string) (*Us
 			Password: password,
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -90,16 +88,14 @@ func (c *Client) SignIn(ctx context.Context, email string, password string) (*Us
 }
 
 func (c *Client) Logout(ctx context.Context, id string) (*string, error) {
-	resp, err := c.service.DeleteUser(ctx, &pb.DeleteUserRequest{
+	resp, err := c.service.SignOut(ctx, &pb.SignOutRequest{
 		Id: id,
 	})
-
 	if err != nil {
 		return nil, err
 	}
 
 	return &resp.Msg, nil
-
 }
 
 func (c *Client) UpdateUser(ctx context.Context, user *UserModel) (*UserModel, error) {
@@ -131,7 +127,6 @@ func (c *Client) UpdateUser(ctx context.Context, user *UserModel) (*UserModel, e
 		CreatedAt:    resp.UserModel.CreatedAt.AsTime(),
 		UpdatedAt:    resp.UserModel.UpdatedAt.AsTime(),
 	}, nil
-
 }
 
 func (c *Client) DeleteUser(ctx context.Context, id string) (*string, error) {

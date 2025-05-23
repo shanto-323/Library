@@ -192,7 +192,7 @@ func (s *Server) NewRefreshTokenHandler(w http.ResponseWriter, r *http.Request) 
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	if r.Method != http.MethodPost {
+	if r.Method != http.MethodGet {
 		return fmt.Errorf("invalid mathod")
 	}
 

@@ -67,6 +67,10 @@ func (s userService) LoginWithEmail(ctx context.Context, email string, password 
 		return nil, err
 	}
 
+	if user == nil {
+		return nil, fmt.Errorf("user not found")
+	}
+
 	err = CompareWithHash(password, user.Password)
 	if err != nil {
 		books.LogError(slog.LevelError, "SERVICE", err, "password not matched")
@@ -78,17 +82,29 @@ func (s userService) LoginWithEmail(ctx context.Context, email string, password 
 		books.LogError(slog.LevelError, "SERVICE", err, "error creating tokens")
 		return nil, err
 	}
+
 	user.Token = token
 	user.RefreshToken = r_token
-
+	books.LogInfo(slog.LevelInfo, "SERVICE", fmt.Sprintf("token :%s , r_token : %s", token, r_token))
+	err = s.userRepository.UpdateUser(ctx, user) // bug
+	if err != nil {
+		return nil, err
+	}
+	books.LogInfo(slog.LevelInfo, "SERVICE", "log in success")
 	return user, nil
 }
 
 func (s userService) Logout(ctx context.Context, id string) error {
-	user, _ := s.userRepository.GetUserById(ctx, id)
-	user.Token = ""
-	user.RefreshToken = ""
-	err := s.userRepository.UpdateUser(ctx, user)
+	user, err := s.userRepository.GetUserById(ctx, id)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return fmt.Errorf("user not found")
+	}
+	user.Token = "empty"
+	user.RefreshToken = "empty"
+	err = s.userRepository.UpdateUser(ctx, user)
 	if err != nil {
 		books.LogError(slog.LevelError, "SERVICE", err, "error logging out")
 		return err
@@ -174,8 +190,13 @@ func mutationHelper(dbUser *UserModel, user *UserModel) (*UserModel, error) {
 		dbUser.Name = user.Name
 		hasChange = true
 	}
-	if dbUser.Password != user.Password {
-		dbUser.Password = user.Password
+	err := CompareWithHash(user.Password, dbUser.Password)
+	if err != nil {
+		pass, err := CreateNewHashPassword(user.Password)
+		if err != nil {
+			return nil, err
+		}
+		dbUser.Password = pass
 		hasChange = true
 	}
 	if dbUser.Phone != user.Phone {
